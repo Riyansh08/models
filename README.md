@@ -1,4 +1,4 @@
 # models
-training language and vision models from scratch 
+training language, vision and action models from scratch 
 
  
