@@ -1,31 +1,33 @@
+# 🧠 Models
+**Training Language, Vision, and Action Models from Scratch**
 
-# models
-training language, vision and action models from scratch 
- 
+---
 
+##  Language Models
+Designing and implementing modern **Language Models** with deep architectural insights and from-scratch components.
 
-## Language Models 
-Implementing Language models 
+### ✅ Implemented
+> *(Coming soon)*
 
+---
 
-### Implemented 
+##  Vision-Language Models
+Creating cutting-edge **Vision-Language Models** for multimodal reasoning and robust representation learning.
 
-
-
-
-## Vision Language Models
-Implementing Vision Language models 
-
-
-### IMPLEMENTED
-
-- [X]  Vision Transformer From scratch
-- [X]  CLIP
-- [ ]  SIGLIP
+### ✅ Implemented
+- **✔️ Vision Transformer (ViT)** – Fully implemented from first principles.
+- **✔️ CLIP** – Contrastive learning of image-text embeddings.
+- **⏳ SIGLIP** – Implementation in progress.
 
 
 
-#### Note - will publish it this week 
+---
+
+ 📌 Note: implementation will be published this week.
+
+## Upcoming Modules
+Planned extensions include:
+> *(Coming soon)*
 
 
 
