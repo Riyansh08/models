@@ -23,11 +23,6 @@ Creating cutting-edge **Vision-Language Models** for multimodal reasoning and ro
 
 ---
 
- 📌 Note: implementation will be published this week.
 
-## Upcoming Modules
-Planned extensions include:
-> *(Coming soon)*
-
-
+📌 Note: implementation will be published this week.
 
