@@ -54,16 +54,33 @@ def safe_one_hot(indexes , max_length):
     max_index = indexes.max() + 1 
     return F.one_hot(indexes , max(max_index + 1 , max_length))[... , :max_length]
 
+#Initialization function - Xavier Like Initializatio
+ 
 def init_t(t):
     dim = t.shape[-1]
     std = 1/math.sqrt(dim)
     return t.uniform(-std , std)
 
-# Activation function 
-
+# Activation function -  Gaussian Error Linear Unit.
 
 class GELU_(nn.Module):
     def forward(self, x):
         return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
 
 GELU = nn.GELU if hasattr(nn, 'GELU') else GELU_
+
+# Main Implementation 
+#expert class 
+
+class MoeExperts(nn.Module):
+    def __init__(self , 
+                 dim , 
+                 num_experts = 16, 
+                 hidden_dim = None, 
+                 activation = GELU, 
+                 init_method = init_t):
+        super(MoeExperts , self).__init__()
+        
+        hidden_dim = default(hidden_dim , dim * 4)
+       
+        
