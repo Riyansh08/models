@@ -37,6 +37,32 @@ class SingleAttentionHead(nn.Module):
       attention_output = torch.matmul(attention_weights , value)
       
       return ( attention_output , attention_weights)
+  
+class ScaledDotProduct(nn.Module):
+    
+    def __init__(self):
+        super(ScaledDotProduct , self).__init__()
+        
+        self.softmax = nn.Softmax(dim = -1) # softmax 
+        
+    def forward(self , k , q , v , mask ,  dropout :nn.Dropout):
+        
+        d_k = q.size(-1) # Get the dimension of the query 
+        scores = torch.matmul(q , k.transpose(-1 , -2) ) / math.sqrt(d_k)
+        if mask is not None:
+            scores = scores.masked_fill(mask == 0, -1e9)
+            
+        attention_weights = self.softmax(scores)
+        if dropout:
+         attention_weights = dropout(attention_weights)
+        attention_output  =  torch.matmul(attention_weights , v)
+        
+        return ( attention_output , attention_weights ) 
+    
+    
+class MultiHeadAttention(nn.Module):
+    
+    pass 
       
 
         
