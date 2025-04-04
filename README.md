@@ -13,12 +13,14 @@
 
 ## 2️⃣ Language Models
 
-### 🔜 To Be Updated
+### 🕒 To Be Updated
+- **Mistral MoE** – [Mixtral of Experts (2023)](https://arxiv.org/abs/2312.15840)
 - *More to be added...*
 
 ---
 
-## 3️⃣ Action Models 🤖 
+## 3️⃣ Action Models 🤖
 
-### 🔜 To Be Updated
+### 🕒 To Be Updated
 - *More to be added...*
+
