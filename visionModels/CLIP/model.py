@@ -211,4 +211,28 @@ class Embeddings(nn.Module):
         return x
 
 class EncoderBlock(nn.Module):
-     pass     
+     def __init__(self , d_model , num_heads):
+         super(EncoderBlock , self).__init__()
+         self.d_model = d_model 
+         self.num_heads = num_heads
+         self.attention = MultiHeadAttention(d_model , num_heads)
+         self.layernorm_1 = nn.LayerNorm(d_model)
+         self.mlp = MLP(d_model)
+         self.layernorm_2 = nn.LayerNorm(d_model)
+         
+     def forward(self , x  , output_attentions = False ):
+         attention_output , _ = self.attention(self.layernorm_1(x) , output_attentions = output_attentions)
+         attention_output = attention_output + x
+         output = self.mlp(self.layernorm_2(x))
+        # Skip connection 
+         x = x + output
+         return x 
+class Encoder(nn.Module):
+    def __init__(self , d_model , num_heads):
+        super(Encoder , self).__init__()
+        self.d_model = d_model 
+        self.num_heads = num_heads
+        self.encoder_block = EncoderBlock(d_model , num_heads)
+        
+
+         
