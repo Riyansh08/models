@@ -107,18 +107,52 @@ class MultiHeadAttention(nn.Module):
      
 #positional encoding - CLIP uses sinusoidal positional encoding 
 
-class PositionalEncoding(nn.Module):
-    def __init__(self , batch_size , dimension ):
-        super(PositionalEncoding , self).__init__()
-        self.batch_size = batch_size
-        self.dimension = dimension 
-        pe = torch.zeros(batch_size , dimension)
-        position = torch.arrange(0 , batch_size , dtype = torch.float).unsqueeze(1)
+class PostionalEncoding(nn.Module):
+  def __init__(self, d_model, max_seq_length):
+    super().__init__()
+    self.d_model = d_model
+    self.max_seq_length = max_seq_length
+
+    pe = torch.zeros(max_seq_length, d_model)
+    position = torch.arange(0, max_seq_length, dtype=torch.float).unsqueeze(1)
+    div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-np.log(10000.0)/d_model))
+
+    pe[:, 0::2] = torch.sin(position * div_term)
+    pe[:, 1::2] = torch.cos(position * div_term)
+
+    self.register_buffer('pe', pe.unsqueeze(0))
+
+  def forward(self, x):
+    seq_len = x.size(1)
+    return x + self.pe[:, :seq_len]
         
-        
-        
+#Note :Original Paper uses Sinusoidal positional encoding      
 class ROPE(nn.Module):
-    pass    
+    def __init__(self, dim):
+        super(ROPE, self).__init__()
+        self.dim = dim
+        assert dim % 2 == 0, "RoPE dimension must be even."
+
+        # Precompute inverse frequency terms
+        inv_freq = 1.0 / (10000 ** (torch.arange(0, dim, 2).float() / dim))
+        self.register_buffer("inv_freq", inv_freq)
+
+    def forward(self, x):
+        # x shape: (batch, num_heads, seq_len, head_dim)
+        seq_len = x.size(-2)
+        t = torch.arange(seq_len, device=x.device).float()  
+        freqs = torch.einsum("i,j->ij", t, self.inv_freq)  
+
+        emb = torch.cat((freqs.sin(), freqs.cos()), dim=-1)  
+        emb = emb[None, None, :, :] 
+        x1, x2 = x[..., ::2], x[..., 1::2]  
+        x_rotated = torch.cat([
+            x1 * emb[..., :self.dim//2] - x2 * emb[..., self.dim//2:],  
+            x1 * emb[..., self.dim//2:] + x2 * emb[..., :self.dim//2]  
+        ], dim=-1)
+
+        return x_rotated
+
         
 class NewGELUActivation(nn.Module):
     def forward(self, input):
@@ -139,14 +173,34 @@ class MLP(nn.Module):
 
 class PatchEmbedding(nn.Module):
     
-    pass        
+    def __init__(self , img_size , d_model , patch_size , num_channels):
+        super(PatchEmbedding , self).__init__()
+        self.image_size = img_size
+        self.patch_size = patch_size
+        self.num_channels = num_channels
+        self.hidden_size = d_model
         
+        self.num_patches = (img_size[0] * img_size(1) ) // patch_size**2
+  
+        self.projection = nn.Conv2d(num_channels , d_model, kernel_size = self.patch_size , stride = self.patch_size)
+        
+    def forward(self  , x):
+        x = self.projection(x)
+        x = x.flatten(2).transpose(1 , 2)
+        return x  
+    
+class Embeddings(nn.Module):
+    pass
+
+
+        
+    
 
           
         
         
         
-        
+    
       
 
         
