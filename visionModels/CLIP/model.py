@@ -8,7 +8,7 @@ import pandas as pd
 # to be implemented: CLIP model 
 
 class SingleAttentionHead(nn.Module):
-    
+     
     def __init__(self , dimension , attention_head_size , dropout , bias = False):
         super(SingleAttentionHead, self).__init__()
         
@@ -106,3 +106,48 @@ class MultiHeadAttention(nn.Module):
          return x 
      
 #positional encoding - CLIP uses sinusoidal positional encoding 
+
+class PositionalEncoding(nn.Module):
+    def __init__(self , batch_size , dimension ):
+        super(PositionalEncoding , self).__init__()
+        self.batch_size = batch_size
+        self.dimension = dimension 
+        pe = torch.zeros(batch_size , dimension)
+        position = torch.arrange(0 , batch_size , dtype = torch.float).unsqueeze(1)
+        
+        
+        
+class ROPE(nn.Module):
+    pass    
+        
+class NewGELUActivation(nn.Module):
+    def forward(self, input):
+        return 0.5 * input * (1.0 + torch.tanh(math.sqrt(2.0 / math.pi) * (input + 0.044715 * torch.pow(input, 3.0))))
+
+class MLP(nn.Module):
+    def __init__(self, dimension , dim_ratio = 4 , activation = NewGELUActivation):
+        super(MLP, self).__init__()
+        self.fc1 = nn.Linear(dimension , dimension * dim_ratio)
+        self.activation = NewGELUActivation()
+        self.fc2 = nn.Linear(dimension * dim_ratio , dimension)
+        
+    def forward(self , x ):
+        x = self.fc1(x)
+        x = self.activation(x)
+        x = self.fc2(x)
+        return x
+
+class PatchEmbedding(nn.Module):
+    
+    pass        
+        
+
+          
+        
+        
+        
+        
+      
+
+        
+     
