@@ -62,8 +62,47 @@ class ScaledDotProduct(nn.Module):
     
 class MultiHeadAttention(nn.Module):
     
-    pass 
-      
-
+    def __init__(self , dimension , num_heads , dropout : 0.0 , bias = False):
+        super(MultiHeadAttention , self ).__init__()
         
+        self.dimension= dimension 
+        self.num_heads = num_heads
+        assert dimension % num_heads == 0, "dimension must be divisible by num_heads"
+        
+        self.head_dim = dimension // num_heads
+        self.dropout = nn.Dropout(dropout)
+        
+        # Initialize projection layers
+        
+        self.w_q = nn.Linear(dimension, dimension, bias=bias)
+        self.w_k = nn.Linear(dimension, dimension, bias=bias)
+        self.w_v = nn.Linear(dimension, dimension, bias=bias)
+        self.w_o = nn.Linear(self.d_model, self.d_model, bias=bias)
+        self.attention = ScaledDotProduct()
+        
+    # Forward pass
+    def forward(self , x , mask : None , output_attentions : False):
+        q = v = k = x
+        
+        query = self.w_q(q)
+        key = self.w_k(k)
+        value = self.q_v(v)
+         
+        # Reshape the input for multi-head attention
+        key = key.view(key.size(0), key.size(1), self.num_heads, self.head_dim).transpose(1 , 2)
+        query = query.view(query.size(0), query.size(1), self.num_heads, self.head_dim).transpose(1 , 2)
+        value = value.view(value.shape[0], value.shape[1], self.n_heads, self.d_k).transpose(1, 2)
+        
+        # Apply attention
+        x , attention_weights = self.attention(key , query , value , mask , self.dropout)
+        # Reshape the output back to the original shape
+        x = x.transpose(1 , 2).contigious().view(x.size(0), -1, self.head_dim * self.num_heads)
+        
+        x = self.w_o(x)
+        x = self.dropout(x)
+        if output_attentions:
+            return x , attention_weights
+        else:
+         return x 
      
+#positional encoding - CLIP uses sinusoidal positional encoding 
