@@ -228,11 +228,51 @@ class EncoderBlock(nn.Module):
          x = x + output
          return x 
 class Encoder(nn.Module):
-    def __init__(self , d_model , num_heads):
+    def __init__(self , d_model , num_heads , n_layers):
         super(Encoder , self).__init__()
         self.d_model = d_model 
         self.num_heads = num_heads
-        self.encoder_block = EncoderBlock(d_model , num_heads)
-        
+        self.n_blocks = nn.ModuleList([])
+        for _ in range(n_layers):
+            block = EncoderBlock(d_model , num_heads)
+            
+            self.n_blocks.append(block)
+            
+    def forward(self , x , output_attentions = False):
+        for block in self.n_blocks:
+            x = block(x , output_attentions = output_attentions)
+        return x 
+class ViT(nn.Module):
+    
+    def __init__(self , d_model , num_heads , img_size , patch_size , num_channels , n_heads , n_layers , out_dim):
+        super(ViT , self).__init__()
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.img_size = img_size
+        self.patch_size = patch_size
+        self.num_channels = num_channels
+        self.n_heads = n_heads
+        self.n_layers = n_layers
+        self.embedding = Embeddings(d_model, img_size, patch_size, num_channels)
 
-         
+        self.encoder = Encoder(d_model, n_heads, n_layers)
+        self.ln_final = nn.LayerNorm(d_model)
+        self.output = nn.Parameter(torch.randn(self.hidden_size, self.emb_dim))
+     
+        
+    def forward(self , x):
+          x = self.embedding(x)
+          x = self.encoder(x)
+          x = self.ln_final(x)
+          cls_token = x[:, 0]
+          cls_token = cls_token @ self.output
+          cls_token = cls_token/ torch.norm(cls_token, dim=-1, keepdim=True)
+          
+          return cls_token
+# Tokenizer- to convert text to tokens.   
+def tokenizer():
+    pass
+          
+          
+     
+    
