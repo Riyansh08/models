@@ -14,7 +14,7 @@
 ## 2️⃣ Language Models
 
 ### ✅ Done
-- **Mistral MoE** – [Mixtral of Experts (2023)](https://arxiv.org/abs/2312.15840)
+- **Mistral MoE** – [Mixtral of Experts (2023)](https://arxiv.org/abs/2401.04088)
 - *More to be added...*
 
 ---
