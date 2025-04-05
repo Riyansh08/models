@@ -190,18 +190,25 @@ class PatchEmbedding(nn.Module):
         return x  
     
 class Embeddings(nn.Module):
-    pass
-
-
-        
+       
+    # Combiing the patch embeddings with the class token and position embeddings.
+    # NOTE - paper also had dropout, but not implemented here.
     
+    def __init__(self , d_model , num_patches , num_channels, patch_size , img_size):
+        super(Embeddings , self).__init__()
+        
+        self.patch_embeddings = PatchEmbedding(img_size , d_model , patch_size , num_channels )
+        self.class_token = torch.nn.Parameter(torch.randn(1 , 1, d_model)) #normal distribution 
+        self.positional_embedding = nn.Parameter(torch.randn(1 , num_patches + 1 , d_model)) #normal distribution
+        
+    def forward(self , x):
+        x = self.patch_embeddings(x)
+        batch_size , _ , _ = x.size()
+        
+        class_token = self.class_token.expand(batch_size  , -1 , -1)
+        x = torch.cat((class_token , x) , dim = 1)
+        x = x + self.positional_embedding 
+        return x
 
-          
-        
-        
-        
-    
-      
-
-        
-     
+class EncoderBlock(nn.Module):
+     pass     
