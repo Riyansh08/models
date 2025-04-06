@@ -270,8 +270,11 @@ class ViT(nn.Module):
           
           return cls_token
 # Tokenizer- to convert text to tokens.   
-def tokenizer():
+def tokenizer(text , encode = True , mask = False , max_len = 512):
+    
+    # Implement the tokenizer for the text input
     pass
+    
           
           
      
