@@ -269,11 +269,47 @@ class ViT(nn.Module):
           cls_token = cls_token/ torch.norm(cls_token, dim=-1, keepdim=True)
           
           return cls_token
-# Tokenizer- to convert text to tokens.   
+# Tokenizer- to convert text to tokens.
+#NOTE - This is charecter level tokenizer. NOT BPE OR SENTENCE PIECE USED IN GPTs 
+   
 def tokenizer(text , encode = True , mask = False , max_len = 512):
     
     # Implement the tokenizer for the text input
-    pass
+    if encode:
+        out = chr(2) + text + chr(3)
+        if len(out) > max_len:
+            out = out[:max_len]
+            out+=chr(3)
+        out = out + "".join([chr(0) for _ in range(max_len - len(out))])
+        out = torch.IntTensor(list(out.encode('utf-8')))
+        mask = torch.ones(len(out.nonzero()))
+        if len(mask) < max_len:
+            mask = torch.cat((mask, torch.zeros(max_len - len(mask)))).type(torch.IntTensor)
+        else:
+            mask = mask.type(torch.IntTensor)
+    else:
+        # Decode the text
+        out = [chr(x) for x in text[1:len(mask.nonzero()) - 1]]
+        out = "".join(out)
+        mask = None
+        
+    return out, mask
+        
+class TextEncoder(nn.Module):
+    def __init__(self , vocab_size , num_heads , num_layers , d_model , max_len , emb_dim):
+        super(TextEncoder , self).__init__()
+        self.vocab_size = vocab_size
+        self.num_heads = num_heads
+        self.num_layers = num_layers
+        self.d_model = d_model
+        self.max_len = max_len
+        self.emb_dim = emb_dim
+        
+        self.embedding = nn.Embedding(vocab_size , d_model)
+        self.positional_embedding = PostionalEncoding(d_model , max_len)
+        self.transformer_encoder = nn.ModuleList([EncoderBlock(d_model, num_heads) for _ in range(num_layers)])
+        
+    
     
           
           
