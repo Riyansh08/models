@@ -69,6 +69,10 @@ class GELU_(nn.Module):
 
 GELU = nn.GELU if hasattr(nn, 'GELU') else GELU_
 
+class Swish(nn.Moudule):
+    def forward(self, x):
+        return x * torch.sigmoid(x)
+  
 # Main Implementation 
 #expert class 
 
@@ -82,5 +86,48 @@ class MoeExperts(nn.Module):
         super(MoeExperts , self).__init__()
         
         hidden_dim = default(hidden_dim , dim * 4)
+        num_experts = cast_tuple(num_experts)
+        w1 = torch.zeros(num_experts , dim , hidden_dim)
+        w2 = torch.zeros(num_experts , hidden_dim , dim )
+        w1 = init_method(w1)
+        w2 = init_method(w2)
+        self.weight1 = nn.Parameter(w1)
+        self.weight2 = nn.Parameter(w2)
+        
+        self.activation = activation 
+    def forward(self , x):
+        hidden = torch.einsum('...nd,...dh->...nh' , x , self.weight1)
+        hidden = self.activation(hidden)
+        output = torch.einsum('...nh,...hd->...nd' , hidden , self.weight2)
+        return output
+        # x = torch.einsum('...nd,...dh->...nh' , x , self.weight1)       
+# Top k gating function 
+class TopKGate(nn.Module):
+    def __init__(self ,
+                 dim , 
+                 num_gates , 
+                 eps = 1e-9 ,
+                 outer_expert_dim = tuple() ,
+                 second_policy_train = 'random', 
+                 second_policy_eval = 'random', 
+                 second_threshold_train = 0.2,
+                 second_threshold_eval = 0.2,
+                 capacity_factor_train = 1.25,
+                 capacity_factor_eval = 1.25):
+        super(TopKGate , self).__init__()
+        self.eps = eps
+        self.num_gayes = num_gates 
+        self.w_gating = nn.Parameter(torch.randn(outer_expert_dim , dim , num_gates))
+        
+        self.second_policy_train = second_policy_train
+        self.second_policy_eval = second_policy_eval
+        self.second_threshold_train = second_threshold_train
+        self.second_threshold_eval = second_threshold_eval
+        self.capacity_factor_train = capacity_factor_train
+        self.capacity_factor_eval = capacity_factor_eval
+        
+    def forward(self , x , important = None):
+        pass
+        
        
         
