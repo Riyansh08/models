@@ -21,7 +21,6 @@ class ModelConfig:
     norm_eps : float = 1e-5
     device : str = field(default_factory=lambda : 'cuda' if torch.cuda.is_available() else 'cpu')
 
-    
 #Llamma 2 uses RMSNorm instead of LayerNorm.
 #For more details, please see the paper Root Mean Square Layer Normalization (2019)
 class RMSNorm(nn.Module):
@@ -53,8 +52,6 @@ class ROPE(nn.Module):
         theta = 1.0 / torch.pow(10000 , theta_numerator / self.h_dim)
         m = torch.arange(self.seq_len , dtype = torch.float32).unsqueeze(1)       
         freqs = torch.matmul(m , theta.unsqueeze(0))
-        
-        
         self.freqs_complex = torch.polar(torch.ones_like(freqs), freqs)
         self.register_buffer("freqs_complex", self.freqs_complex)
           
