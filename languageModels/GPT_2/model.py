@@ -1,4 +1,5 @@
 # Note - GPT-2 Implementation for reference 
+#NOTE - Riyansh Shah 
 
 from re import S
 import torch
