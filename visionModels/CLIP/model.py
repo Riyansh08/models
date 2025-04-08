@@ -308,3 +308,97 @@ class TextEncoder(nn.Module):
         self.embedding = nn.Embedding(vocab_size , d_model)
         self.positional_embedding = PostionalEncoding(d_model , max_len)
         self.transformer_encoder = nn.ModuleList([EncoderBlock(d_model, num_heads) for _ in range(num_layers)])
+    
+    def forward(self, text, mask = None):
+
+      x = self.embed(text)
+
+      x = self.positional_embedding(x)
+
+      for encoder_layer in self.transformer_encoder:
+          x = encoder_layer(x)
+
+      #The output of the encoder layers is the text features. We are going to be using the features from the EOT embedding.
+
+      x = x[torch.arange(text.shape[0]), torch.sub(torch.sum(mask[:,0],dim=1),1)]
+
+      if self.projection is not None:
+         x = x @ self.projection
+
+      x = x / torch.norm(x, dim=-1, keepdim = True)
+
+      return x
+
+class TextEncoder_Retrieval(nn.Module):
+  def __init__(self, vocab_size, d_model, max_seq_length, n_layers,n_heads, emb_dim):
+      super().__init__()
+
+      self.max_seq_length = max_seq_length
+
+      self.embed = nn.Embedding(vocab_size, d_model)
+
+      self.positional_embedding = PostionalEncoding(d_model, max_seq_length)
+
+      self.transformer_encoder = nn.ModuleList([EncoderBlock(d_model, n_heads) for _ in range(n_layers)])
+
+      self.projection = nn.Parameter(torch.randn(d_model, emb_dim))
+
+
+ # # For image retrieval
+  def forward(self, text, mask=None):
+        x = self.embed(text)
+        x = self.positional_embedding(x)
+
+        for encoder_layer in self.transformer_encoder:
+            x = encoder_layer(x)
+
+        if mask is not None:
+            # Get the lengths of each sequence (i.e., find the last non-padded token)
+            seq_lengths = mask.sum(dim=1) - 1  # Subtract 1 to get the index
+            x = x[torch.arange(text.shape[0]), seq_lengths]
+        else:
+            x = x[:, -1]  # If no mask is provided, take the last token in the sequence.
+
+        if self.projection is not None:
+            x = x @ self.projection
+
+        x = x / torch.norm(x, dim=-1, keepdim=True)
+
+        return x
+
+class CLIP(nn.Module):
+
+    def __init__(self, emb_dim, vit_layers, vit_d_model, img_size, patch_size, n_channels, vit_heads, vocab_size, max_seq_length, text_heads, text_layers, text_d_model, retrieval = False):
+        super().__init__()
+
+        self.vision_encoder = ViT(vit_d_model, img_size, patch_size, n_channels, vit_heads, vit_layers, emb_dim) 
+
+        self.text_encoder = TextEncoder(vocab_size, text_d_model, max_seq_length, text_layers, text_heads, emb_dim)
+
+        self.temperature = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def CLIPLoss(self, logits, device = "cuda"):
+       
+   
+        labels = torch.arange(logits.shape[0]).to(device)  
+
+        loss_v = nn.functional.cross_entropy(logits.transpose(-2,-1), labels)
+
+        loss_t = nn.functional.cross_entropy(logits, labels)
+        loss = (loss_v + loss_t) / 2
+
+        return loss
+
+    def forward(self, image, text, mask=None):
+      V_e = self.vision_encoder(image)  
+      T_e = self.text_encoder(text, mask)
+
+      logits = (V_e @ T_e.transpose(-2, -1)) * torch.exp(self.temperature)
+
+      loss = self.CLIPLoss(logits, self.device)
+
+      return loss
+
+ 
