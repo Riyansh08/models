@@ -308,10 +308,3 @@ class TextEncoder(nn.Module):
         self.embedding = nn.Embedding(vocab_size , d_model)
         self.positional_embedding = PostionalEncoding(d_model , max_len)
         self.transformer_encoder = nn.ModuleList([EncoderBlock(d_model, num_heads) for _ in range(num_layers)])
-        
-    
-    
-          
-          
-     
-    
