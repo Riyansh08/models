@@ -3,9 +3,6 @@ import torch
 import torch.nn as nn 
 import torch.nn.functional as F
 from torch.nn import init as init
-import numpy as np
-import math 
-from torch.optim import AdamW
 
 class VAE(nn.Module):
     pass
