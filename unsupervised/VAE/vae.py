@@ -6,6 +6,36 @@ from torch.nn import init as init
 import numpy as np
 import math 
 from torch.optim import AdamW
-
+from dataclasses import dataclass
+@dataclass
+class Config:
+    """
+    Configuration class for the VAE model.
+    """
+    batch_size : int = 64
+    num_epochs : int = 100
+    learning_rate : float = 0.01
+    x_dim :int = 784 # 28*28 mnist, can be altered for other datasets! 
+    z_dim : int = 20
+    hidden_dim1: int = 512
+    hidden_dim2: int = 256
+    dropout : float = 0.2
+    
+if torch.cuda.is_available():
+     device = torch.device("cuda")
+else:
+    device = torch.device("cpu")   
+class ENCODER(nn.Module):
+    def __init__(self , config : Config):
+        super(ENCODER , self).__init__()
+        self.config = config
+        self.dropout = nn.Dropout(config.dropout)
+        self.fc1 = nn.Linear(config.x_dim , config.hidden_dim1)
+        self.fc2 = nn.Linear(config.hidden_dim1 , config.hidden_dim2)
+        self.fc_mean = nn.Linear(config.hidden_dim2 , config.z_dim)
+        self.fc_logvar = nn.Linear(self.hidden_dim2 , config.z_dim)
+        self.LeakyReLU = nn.LeakyReLU(0.2)
+    def forward(self , x):
+        pass     
 class VAE(nn.Module):
     pass
