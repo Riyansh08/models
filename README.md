@@ -1,5 +1,9 @@
 # 🧠 Foundation Models for Vision, Language & Action
 
+<p align="center">
+  <img src="main.png" alt="Foundation Models Header" width="600"/>
+</p>
+
 ---
 
 ## 1️⃣ Vision Models
@@ -22,4 +26,3 @@
 
 ### ⏳ To Be Updated
 - *(Work in progress)*
-
