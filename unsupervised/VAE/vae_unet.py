@@ -32,5 +32,6 @@ class Convolutional:
         pass
 class Encoder(nn.Module):
     pass
+
 class VAE(nn.Module):
     pass

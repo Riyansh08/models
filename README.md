@@ -28,3 +28,11 @@
 
 ###  To Be Updated
 - *(Work in progress)*
+
+---
+
+##  Unsupervised Learning
+
+### ✔️ Papers Done
+- **VAE (MLP)** – Variational Autoencoder using fully-connected networks (MLP)
+- **VAE (U-Net CNN)** – Convolutional VAE with U-Net-style encoder/decoder 

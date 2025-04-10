@@ -1,5 +1,5 @@
 #VAE - using simple MLP 
-#NOTE - dataset loading and training loop not imcluded
+#NOTE - dataset loading and training loop not included
 import torch
 import torch.nn as nn 
 import torch.nn.functional as F
