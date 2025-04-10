@@ -29,13 +29,23 @@ class ENCODER(nn.Module):
     def __init__(self , config : Config):
         super(ENCODER , self).__init__()
         self.config = config
-        self.dropout = nn.Dropout(config.dropout)
+        
         self.fc1 = nn.Linear(config.x_dim , config.hidden_dim1)
         self.fc2 = nn.Linear(config.hidden_dim1 , config.hidden_dim2)
         self.fc_mean = nn.Linear(config.hidden_dim2 , config.z_dim)
         self.fc_logvar = nn.Linear(self.hidden_dim2 , config.z_dim)
         self.LeakyReLU = nn.LeakyReLU(0.2)
     def forward(self , x):
-        pass     
+        x = self.LeakyReLU(self.fc1(x))
+        x = self.LeakyReLU(self.fc2(x))
+        mean = self.fc_mean(x)
+        logvar = self.fc_logvar(x)        
+        return mean , logvar
+class Decoder(nn.Module):
+    def __init__(self , config : Config):
+        super(Decoder , self).__init__()
+        self.config = config 
+        
+              
 class VAE(nn.Module):
     pass
