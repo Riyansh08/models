@@ -2,6 +2,8 @@
 
 <p align="center">
   <img src="main.png" alt="Foundation Models Header" width="600"/>
+  <br>
+  <sub><em>Made by AI with 💻 compute</em></sub>
 </p>
 
 ---
