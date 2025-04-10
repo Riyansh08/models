@@ -24,15 +24,16 @@
 
 ---
 
-## 3️⃣ Action Models 
+##  3️⃣  Unsupervised Learning
+
+### ✔️ Papers Done
+- **VAE (MLP)** – Variational Autoencoder using fully-connected networks
+- **VAE (U-Net CNN)** – Convolutional VAE with U-Net-style encoder/decoder 
+
+--- 
+
+## 4️⃣ Action Models 
 
 ###  To Be Updated
 - *(Work in progress)*
 
----
-
-##  Unsupervised Learning
-
-### ✔️ Papers Done
-- **VAE (MLP)** – Variational Autoencoder using fully-connected networks (MLP)
-- **VAE (U-Net CNN)** – Convolutional VAE with U-Net-style encoder/decoder 
