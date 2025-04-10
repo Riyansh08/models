@@ -3,14 +3,14 @@
 <p align="center">
   <img src="main.png" alt="Foundation Models Header" width="600"/>
   <br>
-  <sub><em>Made by AI with 💻 compute</em></sub>
+<sub><strong><em>Made by AI with Compute</em></strong></sub
 </p>
 
 ---
 
 ## 1️⃣ Vision Models
 
-### ✔️ Papers Done
+### ✔️ Papers Done 
 - **CLIP** – [Contrastive Language–Image Pretraining (2021)](https://arxiv.org/abs/2103.00020)
 - **ViT** – [An Image is Worth 16x16 Words (2020)](https://arxiv.org/abs/2010.11929)
 
