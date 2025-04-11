@@ -85,9 +85,9 @@ class MultiHeadAttention(nn.Module):
         self.config = config
         assert config.dim % config.n_heads == 0 , "dimension must be divisible by number of heads"
         self.head_dim  = config.dim // config.n_heads 
-        self.n_heads =config.n_heads
+        self.q_n_heads = config.n_heads
         self.kv_heads = config.kv_heads if multiquery else config.n_heads
-        self.n_rep = config.n_heads // self.kv_heads #for multiquery attention
+        self.n_rep = config.n_heads // self.kv_heads #for groupquery attention
         self.q_w = nn.Linear(config.dim , config.dim , bias = False)
         self.k_w = nn.Linear(config.dim , config.dim , bias = False)
         self.v_w = nn.Linear(config.dim , config.dim , bias = False)
@@ -98,10 +98,28 @@ class MultiHeadAttention(nn.Module):
         #ROPE - ROTARY POSITION EMBEDDINGS
         self.rope = ROPE(self.head_dim , config.max_seq_len)
     @staticmethod
-    def multiquery_attention(self):
-        pass
-    def forward(self):
-        pass                  
+    def group_query_attention(self , config , x ):
+        batch_size , seq_len , n_kv_heads , head_dim = x.shape
+        if self.n_rep == 1:
+            return x 
+        else:
+            return (x[: , : , : , None , :]
+                    .expand(batch_size , seq_len , n_kv_heads , self.n_rep , head_dim)).reshape(batch_size , seq_len , n_kv_heads * self.n_rep , head_dim)
+    def forward(self, x ,config):
+        batch_size , seq_len , dim = x.shape  
+        assert dim == self.config.dim , "dimension must be equal to config.dim"              
+        query = self.q_w(x)
+        value = self.v_w(x)
+        key = self.k_w(x)
+        query  = query.view(batch_size , seq_len , self.q_n_heads , self.head_dim)
+        #KEY AND VALUE HEADS- IF GROUPEDQUERY THEN USE KV HEADS
+        value = value.view(batch_size , seq_len , self.kv_heads , self.head_dim)
+        key = key.view(batch_size , seq_len , self.kv_heads , self.head_dim)       
+        #APPLY ROPE 
+        query = self.rope(query , start_pos = 0)
+        key = self.rope(key , start_pos = 0)        
+        #KEY-VALUE CACHE RETRIEVAL
+               
 class DecoderBlocks(nn.Module):
     def __init__(self):
         pass    

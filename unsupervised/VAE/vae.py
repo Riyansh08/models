@@ -34,7 +34,7 @@ class ENCODER(nn.Module):
         self.fc1 = nn.Linear(config.x_dim , config.hidden_dim1)
         self.fc2 = nn.Linear(config.hidden_dim1 , config.hidden_dim2)
         self.fc_mean = nn.Linear(config.hidden_dim2 , config.z_dim)
-        self.fc_logvar = nn.Linear(self.hidden_dim2 , config.z_dim)
+        self.fc_logvar = nn.Linear(config.hidden_dim2 , config.z_dim)
         self.LeakyReLU = nn.LeakyReLU(0.2)
     def forward(self , x):
         x = self.LeakyReLU(self.fc1(x))
@@ -67,7 +67,7 @@ class VAE(nn.Module):
         return mean + std * e
         
     def forward(self ,x ):
-        mean , logvar = self.encoder
+        mean , logvar = self.encoder(x)
         e = self.reparameterize(mean , logvar)
         x_out = self.decoder(e)
         return x_out , mean , logvar       
