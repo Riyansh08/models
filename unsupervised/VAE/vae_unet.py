@@ -1,4 +1,5 @@
 #VAE - using U-Net architecture
+#NOTE - dataset loading and training loop not included
 import torch
 import torch.nn as nn 
 import torch.nn.functional as F
@@ -26,12 +27,16 @@ class Config:
     kernel_size :int
     stride : int
     padding : int 
-#CNN from Scratch 
-class Convolutional:
-    def __init__(self ):
+
+#LeakyReLU
+class LeakyReLU:
+    def __init__(self):
         pass
+#Using - CNN
 class Encoder(nn.Module):
     pass
-
+class Decoder(nn.Module):
+    pass
 class VAE(nn.Module):
     pass
+#Loss Function
