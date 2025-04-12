@@ -105,7 +105,7 @@ class MultiHeadAttention(nn.Module):
         else:
             return (x[: , : , : , None , :]
                     .expand(batch_size , seq_len , n_kv_heads , self.n_rep , head_dim)).reshape(batch_size , seq_len , n_kv_heads * self.n_rep , head_dim)
-    def forward(self, x ,config):
+    def forward(self, x ,config  , start_pos = 0):
         batch_size , seq_len , dim = x.shape  
         assert dim == self.config.dim , "dimension must be equal to config.dim"              
         query = self.q_w(x)
@@ -119,6 +119,13 @@ class MultiHeadAttention(nn.Module):
         query = self.rope(query , start_pos = 0)
         key = self.rope(key , start_pos = 0)        
         #KEY-VALUE CACHE RETRIEVAL
+        self.key_cache[:batch_size , start_pos:start_pos + seq_len , : , :] = key
+        self.value_cache[:batch_size , start_pos:start_pos + seq_len , : , :] = value
+        keys = self.key_cache[:batch_size , :start_pos + seq_len , : , :] 
+        values = self.value_cache[:batch_size , :start_pos + seq_len , : , :]
+        #REPEAT THE KEY AND VALUE HEADS
+        
+        
                
 class DecoderBlocks(nn.Module):
     def __init__(self):
