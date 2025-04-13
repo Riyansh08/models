@@ -1,3 +1,5 @@
+#Deep Q Learning from scratch playing the game of blob
+#reference - https://github.com/cneuralnetwork/solving-ml-papers/blob/main/DQN/Deep%20Q%20Networks.py
 import numpy as np
 import torch
 import torch.nn as nn
@@ -33,7 +35,20 @@ class Config:
     show_preview : bool =False
     
 # Environment define
-class BlobEnv:
-    pass
-
-    
+class Blob:
+    def __init__(self  , size:int , color:tuple):
+        self.size = size 
+        self.color = color
+        # spawn random location
+        self.x = np.random.randint(0 , size)
+        self.y = np.random.randint(0 , size) 
+    def __str__(self):
+        return f"Blob(size={self.size}, color={self.color}, x={self.x}, y={self.y})"
+    def __sub__(self , other):
+        return (self.x-other.x , self.y-other.y)
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y    
+    def action(self, choice):
+        pass
+    def move(self , x = False , y = False):
+        pass
