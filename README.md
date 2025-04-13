@@ -3,7 +3,7 @@
 <p align="center">
   <img src="main.png" alt="Foundation Models Header" width="600"/>
   <br>
-<sub><strong><em>Made by AI with Compute</em></strong></sub
+<sub><strong><em>Made by AI with Compute</em></strong></sub>
 </p>
 
 ---
@@ -19,13 +19,13 @@
 ## 2️⃣ Language Models
 
 ### ✔️ Papers Done
+- **LLaMA 2** – [LLaMA 2: Open Foundation and Fine-Tuned Chat Models (2023)](https://arxiv.org/abs/2307.09288)
 - **Mistral MoE** – [Mixtral of Experts (2023)](https://arxiv.org/abs/2401.04088)
 - **GPT-2** – [Language Models are Unsupervised Multitask Learners (2019)](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf)
 
-
 ---
 
-##  3️⃣  Unsupervised Learning
+## 3️⃣ Unsupervised Learning
 
 ### ✔️ Papers Done
 - **VAE (MLP)** – Variational Autoencoder using fully-connected networks
@@ -35,6 +35,5 @@
 
 ## 4️⃣ Action Models 
 
-###  To Be Updated
+### 🕒 To Be Updated
 - *(Work in progress)*
-
