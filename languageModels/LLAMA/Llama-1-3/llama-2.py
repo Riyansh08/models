@@ -1,3 +1,4 @@
+#lLama 2 
 from dataclasses import dataclass , field
 from typing import Optional, Callable, Any
 import torch
@@ -10,7 +11,7 @@ NOTE : The Llama 1 architecture is almost similar to Llama 2, except that Llama 
 Llama 2 has a context window of 4096 tokens, while Llama 1 has a context window of 2048 tokens.
 """
 @dataclass 
-class ModelConfig:
+class Config:
     dim : int = 4096 
     hidden_dim : int = 11008
     ffn_dim : int = 11008
@@ -45,7 +46,7 @@ class SiLU(nn.Module):
     def forward(self , x ):
         return x * 1/(1 +torch.exp(-x))   
 class SwiGLU_FFN(nn.Module):
-    def __init__(self , config : ModelConfig):
+    def __init__(self , config : Config):
         super(SwiGLU_FFN , self).__init__()
         self.config = config
         self.ffn1 = nn.Linear(config.dim , config.ffn_dim)
@@ -80,7 +81,7 @@ class ROPE(nn.Module):
         x_out = x_out.reshape(*x.shape)
         return x_out.type_as(x).to(x.device)    
 class MultiHeadAttention(nn.Module):
-    def __init__(self , config : ModelConfig , multiquery = False):
+    def __init__(self , config : Config , multiquery = False):
         super(MultiHeadAttention , self).__init__()
         self.config = config
         assert config.dim % config.n_heads == 0 , "dimension must be divisible by number of heads"
@@ -99,12 +100,13 @@ class MultiHeadAttention(nn.Module):
         self.rope = ROPE(self.head_dim , config.max_seq_len)
     @staticmethod
     def group_query_attention(self , config , x ):
+        n_rep = config.n_heads // config.n_kv_heads
         batch_size , seq_len , n_kv_heads , head_dim = x.shape
-        if self.n_rep == 1:
+        if n_rep == 1:
             return x 
         else:
             return (x[: , : , : , None , :]
-                    .expand(batch_size , seq_len , n_kv_heads , self.n_rep , head_dim)).reshape(batch_size , seq_len , n_kv_heads * self.n_rep , head_dim)
+                    .expand(batch_size , seq_len , n_kv_heads , n_rep , head_dim)).reshape(batch_size , seq_len , n_kv_heads * self.n_rep , head_dim)
     def forward(self, x ,config  , start_pos = 0):
         batch_size , seq_len , dim = x.shape  
         assert dim == self.config.dim , "dimension must be equal to config.dim"              
@@ -124,11 +126,46 @@ class MultiHeadAttention(nn.Module):
         keys = self.key_cache[:batch_size , :start_pos + seq_len , : , :] 
         values = self.value_cache[:batch_size , :start_pos + seq_len , : , :]
         #REPEAT THE KEY AND VALUE HEADS
-        
-        
-               
+        keys = self.group_query_attention(config , keys)
+        values = self.group_query_attention(config , values)
+        #CRUX OF THE ATTENTION MECHANISM
+        query = query.transpose(1,2)
+        keys = keys.transpose(1,2)
+        values = values.transpose(1,2)
+        scores = torch.matmul(query , keys.transpose(-2,-1)) / math.sqrt(self.head_dim)
+        scores = F.softmax(scores , dim = -1)
+        attention_scores = torch.matmul(scores , values)
+        attention_scores = attention_scores.transpose(1,2).contiguous().view(batch_size , seq_len , dim)
+        output = self.o_w(attention_scores)
+        return output       
 class DecoderBlocks(nn.Module):
-    def __init__(self):
-        pass    
+    def __init__(self , config: Config):
+        super(DecoderBlocks , self).__init__()
+        self.config = config
+        self.attention = MultiHeadAttention(config)
+        self.ffn = SwiGLU_FFN(config)
+        self.norm1 = RMSNorm(config.dim , eps = config.norm_eps)
+        self.norm2 = RMSNorm(config.dim , eps = config.norm_eps)
+    def forward(self , x , config , start_pos = 0):
+        out = x + self.attention(self.norm1(x) , config , start_pos = start_pos) 
+        final = out + self.ffn(self.norm2(out))
+        return final       
 class Llama2(nn.Module):
-    pass
+    def __init__(self , config : Config):
+        super(Llama2 , self).__init__()
+        self.config = config
+        self.embedding = nn.Embedding(config.vocab_size , config.dim )
+        self.blocks = nn.ModuleList([DecoderBlocks(config) for _ in range(config.n_layers)])
+        self.norm = RMSNorm(config.dim , eps = config.norm_eps)
+        self.output = nn.Linear(config.dim , config.vocab_size, bias = False)
+    def forward(self , x , start_pos = 0):
+        batch_size , seq_len = x.shape
+        assert seq_len <= self.config.max_seq_len , "sequence length must be less than max sequence length"
+        assert batch_size <= self.config.max_batch_size , "batch size must be less than max batch size"
+        x = self.embedding(x)
+        for block in self.blocks:
+            x = block(x , self.config , start_pos = start_pos)
+        x = self.norm(x)
+        x = self.output(x)
+        return x
+        
