@@ -32,6 +32,7 @@ class RMSNorm(nn.Module):
         super().__init__()
         self.dim_size = config.dim_size
         
+        
     
 
 #ROPE - ROTARY POSITIONAL EMBEDDING 
