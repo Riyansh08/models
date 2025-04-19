@@ -71,4 +71,7 @@ class KVCache:
             self.key_cache.append(key)
             self.value_cache.append(values)
         else:
-            pass
+            self.key_cache[layer_index] = torch.cat([self.key_cache[layer_index], key], dim = -2)
+            self.value_cache[layer_index] = torch.cat([self.value_cache[layer_index], values], dim = -2)
+    def repeat_kv(self):
+        pass  

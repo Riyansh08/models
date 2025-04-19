@@ -132,5 +132,10 @@ class BlobEnv:
             done =True 
         return new_observation , reward , done
     
+    def get_image(self):
+        env = np.zeros((self.SIZE , self.SIZE , 3) , dtype=np.uint8)
+        
+        
     def render(self):
-        pass
+        pass  
+        
