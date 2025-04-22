@@ -73,5 +73,35 @@ class KVCache:
         else:
             self.key_cache[layer_index] = torch.cat([self.key_cache[layer_index], key], dim = -2)
             self.value_cache[layer_index] = torch.cat([self.value_cache[layer_index], values], dim = -2)
-    def repeat_kv(self):
-        pass  
+    def clear(self ):
+        self.key_cache.clear()
+        self.value_cache.clear()
+#REPEAT KEY - VALUE 
+def repeat_kv(self , kv , num_repeat):
+        batch_size , num_heads , _ ,_ = kv.shape
+        if num_repeat ==1:
+            return kv 
+        else:
+            kv = kv[: , : , None , : , :].expand(batch_size , num_heads , num_repeat , -1, -1)
+            kv = kv.reshape(batch_size , num_heads * num_repeat , -1 , -1)
+            return kv 
+#MULTI HEAD ATTENTION
+class MultiHeadAttention(nn.Module):
+    def __init__(self , config: GemmaConfig):
+        super(MultiHeadAttention , self).__init__()
+        self.config = config 
+        self.num_attention_heads = config.num_attention_heads
+        self.num_kv_heads = config.num_kv_heads
+        self.head_dim = config.head_dim
+        self.attention_bias = config.attention_bias
+        self.dim = config.dim_size
+        self.num_repeat = config.num_attention_heads // config.num_kv_heads
+        self.rope_theta = config.rope_theta
+        self.w_q = nn.Linear(config.dim_size , config.dim_size , bias = False)
+        self.w_k = nn.Linear(config.dim_size , config.dim_size , bias = False)
+        self.w_v = nn.Linear(config.dim_size , config.dim_size , bias = False)
+        self.w_o = nn.Linear(config.dim_size , config.dim_size , bias = False)
+        self.rope = Rope(config.rope_theta)
+    def forward(self):
+        pass
+        
