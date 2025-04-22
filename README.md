@@ -8,7 +8,7 @@
 
 ---
 
-## 1️. Vision Models
+## 1️ Vision Models
 
 ### ✔️ Papers Done 
 - **CLIP** – [Contrastive Language–Image Pretraining (2021)](https://arxiv.org/abs/2103.00020)
@@ -16,7 +16,7 @@
 
 ---
 
-## 2️. Language Models
+## 2️ Language Models
 
 ### ✔️ Papers Done
 - **LLaMA 2** – [LLaMA 2: Open Foundation and Fine-Tuned Chat Models (2023)](https://arxiv.org/abs/2307.09288)
@@ -25,7 +25,7 @@
 
 ---
 
-## 3️. Unsupervised Learning
+## 3️ Unsupervised Learning
 
 ### ✔️ Papers Done
 - **VAE (MLP)** – Variational Autoencoder using fully-connected networks
@@ -33,7 +33,7 @@
 
 --- 
 
-## 4️. Action Models 
+## 4️ Action Models 
 
 ### To Be Updated
 - *(Work in progress)*
