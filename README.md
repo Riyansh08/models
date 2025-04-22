@@ -8,7 +8,7 @@
 
 ---
 
-## 1️ Vision Models
+## 1️. Vision Models
 
 ### ✔️ Papers Done 
 - **CLIP** – [Contrastive Language–Image Pretraining (2021)](https://arxiv.org/abs/2103.00020)
