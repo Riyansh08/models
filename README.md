@@ -11,8 +11,9 @@
 ## 1️. Vision Models
 
 ### ✔️ Papers Done 
-- **CLIP** – [Contrastive Language–Image Pretraining (2021)](https://arxiv.org/abs/2103.00020)
-- **ViT** – [An Image is Worth 16x16 Words (2020)](https://arxiv.org/abs/2010.11929)
+- **CLIP** – [Contrastive Language–Image Pretraining (2021)](https://arxiv.org/abs/2103.00020)  
+- **ViT** – [An Image is Worth 16x16 Words (2020)](https://arxiv.org/abs/2010.11929)  
+- **AlexNet** – [ImageNet Classification with Deep Convolutional Neural Networks (2012)](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf)
 
 ---
 

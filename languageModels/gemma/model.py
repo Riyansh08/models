@@ -103,4 +103,4 @@ class MultiHeadAttention(nn.Module):
         self.w_o = nn.Linear(config.dim_size , config.dim_size , bias = False)
         self.rope = Rope(config.rope_theta)
     def forward(self ,  ):
-        pass 
+        pass  
