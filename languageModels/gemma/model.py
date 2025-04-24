@@ -111,7 +111,7 @@ def repeat_kv(self , kv , num_repeat):
             return kv 
 #MULTI HEAD ATTENTION
 class MultiHeadAttention(nn.Module):
-    def __init__(self , config: GemmaConfig):
+    def __init__(self , config: GemmaConfig , cache : KVCache):
         super(MultiHeadAttention , self).__init__()
         self.config = config 
         self.num_attention_heads = config.num_attention_heads
@@ -126,7 +126,9 @@ class MultiHeadAttention(nn.Module):
         self.w_v = nn.Linear(config.dim_size , config.dim_size , bias = False)
         self.w_o = nn.Linear(config.dim_size , config.dim_size , bias = False)
         self.rope = Rope(config.rope_theta)
-    def forward(self , x , cache , layer_index , attention_mask = None ):
+        self.repeat_kv = self.repeat_kv
+    def forward(self , x , cache : KVCache , layer_index , attention_mask = None ):
+        batch_size , seq_len , _ = x.shape
         q = self.w_q(x)
         k = self.w_k(x)
         v = self.w_v(x)
@@ -135,5 +137,27 @@ class MultiHeadAttention(nn.Module):
         v = v.view(batch_size , seq_len , self.num_kv_heads , self.head_dim)
         q = self.rope(q)
         k = self.rope(k)
-        if cache is not None:
-            pass  #TODO
+        k = self.repeat_kv(k , self.num_repeat)
+        v = self.repeat_kv(v , self.num_repeat)
+        if cache is not None: 
+            k , v = cache.update(k , v , layer_index)
+        attention_weights = torch.matmul(q , k.transpose(-1 , -2)) / math.sqrt(self.head_dim)
+        if attention_mask is not None:
+            attention_weights = attention_weights.masked_fill(attention_mask == 0, -1e9)
+        attention_weights = F.softmax(attention_weights , dim = -1)
+        attention_output = torch.matmul(attention_weights , v)
+        attention_output = attention_output.transpose(-1 , -2)
+        attention_output = attention_output.contiguous().view(batch_size , seq_len , self.num_attention_heads , self.head_dim)
+        attention_output = self.w_o(attention_output)
+        return attention_output , attention_weights
+#DECODER LAYER 
+class DecoderLayer(nn.Module):
+    def __init__(self , config : GemmaConfig):
+        super(DecoderLayer , self).__init__()
+        self.config = config
+        self.attention = MultiHeadAttention(config , cache = KVCache())
+        self.mlp = MLP(config)
+        self.rms1 = RMSNorm(config)
+        self.rms2 = RMSNorm(config)
+    def forward(self , x , attention_mask = None , layer_index = 0):
+        pass #TODO
