@@ -53,9 +53,33 @@ class MLP(nn.Module):
         output = self.ff3(out)
         return output 
 #ROPE - ROTARY POSITIONAL EMBEDDING 
-class Rope:
-    def __init__():
-        pass
+class Rope(nn.Module):
+    def __init__(self, config: GemmaConfig):
+        super().__init__()
+        self.head_dim = config.head_dim                      
+        max_seq_len = config.position_embedding              
+        theta = float(config.rope_theta)                     
+        inv_freq = 1.0 / (theta ** (torch.arange(0, self.head_dim, 2).float() / self.head_dim))
+        positions = torch.arange(max_seq_len, dtype=torch.float32)
+        sinusoid = torch.einsum("i,j->ij", positions, inv_freq)
+        sinusoid = torch.einsum("i,j->ij", positions, inv_freq)
+        sin = torch.stack([sinusoid.sin(), sinusoid.sin()], dim=-1).flatten(1)
+        cos = torch.stack([sinusoid.cos(), sinusoid.cos()], dim=-1).flatten(1)
+        self.register_buffer("sin", sin, persistent=False)   
+        self.register_buffer("cos", cos, persistent=False)
+    def forward(self, x: torch.Tensor):
+        """
+        x: Tensor of shape [batch_size, seq_len, num_heads, head_dim]
+        returns: same shape, with rotary embeddings applied to the last dim
+        """
+        batch_size, seq_len, num_heads, head_dim = x.shape
+        assert head_dim == self.head_dim, "Head dim mismatch"
+        sin = self.sin[:seq_len]   .unsqueeze(0).unsqueeze(2)  
+        cos = self.cos[:seq_len]   .unsqueeze(0).unsqueeze(2)
+        x_even = x[..., 0::2]
+        x_odd  = x[..., 1::2]
+        x_rot = torch.cat((-x_odd.unsqueeze(-1), x_even.unsqueeze(-1)), dim=-1).view_as(x)
+        return x * cos + x_rot * sin
 # CLASS KV-CACHE DURING INFERENCE 
 class KVCache:
     def __init__(self):
@@ -102,5 +126,14 @@ class MultiHeadAttention(nn.Module):
         self.w_v = nn.Linear(config.dim_size , config.dim_size , bias = False)
         self.w_o = nn.Linear(config.dim_size , config.dim_size , bias = False)
         self.rope = Rope(config.rope_theta)
-    def forward(self ,  ):
-        pass  
+    def forward(self , x , cache , layer_index , attention_mask = None ):
+        q = self.w_q(x)
+        k = self.w_k(x)
+        v = self.w_v(x)
+        q = q.view(batch_size , seq_len , self.num_attention_heads , self.head_dim)
+        k = k.view(batch_size , seq_len , self.num_kv_heads , self.head_dim)
+        v = v.view(batch_size , seq_len , self.num_kv_heads , self.head_dim)
+        q = self.rope(q)
+        k = self.rope(k)
+        if cache is not None:
+            pass  #TODO
