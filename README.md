@@ -23,6 +23,10 @@
 - **LLaMA 2** – [LLaMA 2: Open Foundation and Fine-Tuned Chat Models (2023)](https://arxiv.org/abs/2307.09288)
 - **Mistral MoE** – [Mixtral of Experts (2023)](https://arxiv.org/abs/2401.04088)
 - **GPT-2** – [Language Models are Unsupervised Multitask Learners (2019)](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf)
+- **Word2Vec** – [Word2Vec (2014)](https://arxiv.org/abs/1301.3812)
+- **Gemma** – [Gemma: A Generalized Multi-Modal Foundation Model (2024)](https://arxiv.org/abs/2401.04088)
+
+
 
 ---
 
@@ -42,7 +46,14 @@
 
 --- 
 
-## 4️. Action Models 
+## 5. Action Models 
 
 ### To Be Updated
 - *(Work in progress)*
+
+---
+
+## 6. Fine-Tuning 
+
+###  ✔️ Papers Done
+- **LoRA** – [LoRA: Low-Rank Adaptation for Fast Fine-Tuning (2023)](https://arxiv.org/abs/2304.00062)

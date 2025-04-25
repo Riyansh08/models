@@ -178,4 +178,10 @@ class Gemma(nn.Module):
         self.layernorm = RMSNorm(config)
         self.output = nn.Linear(config.dim_size , config.vocab_size)
     def forward(self, x , attention_mask : bool = True , cache : Optional[KVCache] = None):
-        pass #TODO
+        batch_size , seq_len = x.shape
+        x = self.embedding(x)
+        if attention_mask is None:
+            attention_mask = torch.ones((batch_size , seq_len))
+        
+            
+        
