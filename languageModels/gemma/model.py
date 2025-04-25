@@ -159,5 +159,23 @@ class DecoderLayer(nn.Module):
         self.mlp = MLP(config)
         self.rms1 = RMSNorm(config)
         self.rms2 = RMSNorm(config)
-    def forward(self , x , attention_mask = None , layer_index = 0):
+    def forward(self , x , layer_id , attention_mask = None ):
+        residual = x 
+        x = self.rms1(x) #PreNorm in GEMMA
+        x , _ = self.attention(x , attention_mask = attention_mask , layer_index = layer_id)
+        x = residual + x #Residual connection
+        x = self.rms2(x) #PostNorm in GEMMA
+        x = self.mlp(x)
+        x = residual + x #Residual connection
+        return x
+#GEMMA MODEL 
+class Gemma(nn.Module):
+    def __init__(self , config : GemmaConfig):
+        super(Gemma , self).__init__()
+        self.config = config
+        self.embedding = nn.Embedding(config.vocab_size , config.dim_size)
+        self.decoder_layers = nn.ModuleList([DecoderLayer(config) for _ in range(config.hidden_layers)])
+        self.layernorm = RMSNorm(config)
+        self.output = nn.Linear(config.dim_size , config.vocab_size)
+    def forward(self, x , attention_mask : bool = True , cache : Optional[KVCache] = None):
         pass #TODO
