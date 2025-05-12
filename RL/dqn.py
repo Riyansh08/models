@@ -176,4 +176,97 @@ class DQNAGENT(nn.Module):
         self.device = torch.cuda if torch.cuda.is_available() else torch.cpu
     def create_model(self):
         #NORMAL CNN MODEL 
-        pass
+        model = nn.Sequential()
+        model.add(Conv2d(256 , (3,3) , input_shape = env.OBSERVATION_STATE_VALUE))
+        model.add(Activation('relu'))
+        model.add(Conv2d(128 , (3,3)))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2d((2,2)))
+        model.add(Conv2d(64 , (3,3)))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2d((2,2)))
+        model.add(Flatten())
+        model.add(Dense(64))
+        model.add(Activation('relu'))
+        model.add(Dense(env.ACTION_SPACE_SIZE, activation='linear'))
+        model.compile(optimizer = ADAM(learning_rate = 0.001) , loss = 'mse')
+        return model
+    def update_replay_memory(self , new_transition):
+        self.replay_memory.append(new_transition)
+    def get_qs(self , state):
+        self.model.predict(np.array(state).reshape(-1 , *state.shape)/ 255)[0]
+    def train(self , terminal_state ,  train_episodes = 100000 ):
+        if self.replay_memory < self.min_replay_memory_size:
+            return 
+        minibatch = random.sample(self.replay_memory , self.config.minibatch_size) # Sampling for training randomly to avoid similar patterns in close episodes 
+        current_states = np.array([transition[0] for transition in minibatch]) / 255
+        new_states = np.array([transition[3] for transition in minibatch])/ 255 
+        future_qs = self.target_model.predict(new_states)
+        X = []
+        Y = []
+        for index , (current_state , action , reward , new_state , done) in enumerate(minibatch):
+            if not done:
+                max_future_q = np.max(future_qs[index])
+                new_q = reward + self.config.discount * max_future_q 
+            else:
+                new_q = reward 
+            current_qs = current_states[index]
+            current_qs[action] = new_q
+            X.append(current_state)
+            Y.append(current_qs)
+            self.model.fit(
+            np.array(X)/255.0,
+            np.array(y),
+            batch_size=self.config.minibatch_size,
+            verbose=0,
+            shuffle=False,
+            callbacks=[self.tensorboard] if terminal_state else None
+        )
+        # update target network
+        if terminal_state:
+            self.target_update_counter += 1
+        if self.target_update_counter > self.config.update_target_every:
+            self.target_model.set_weights(self.model.get_weights())
+            self.target_update_counter = 0
+            
+agent = DQNAGENT(Config())
+
+for episode in tqdm(range(1, config.episodes+1), ascii=True, unit="episode"):
+    agent.tensorboard.step = episode
+    episode_reward = 0
+    step = 1
+    curr_state = env.reset()
+    done = False
+
+    while not done:
+        if np.random.random() > agent.epsilon:
+            action = np.argmax(agent.get_qs(curr_state))
+        else:
+            action = np.random.randint(0, env.ACTION_SPACE_SIZE)
+        new_state, reward, done = env.step(action)
+        episode_reward += reward
+        if config.show_preview and episode % config.aggregate_stats_every == 0:
+            env.render()
+        agent.update_replay_memory((curr_state, action, reward, new_state, done))
+        agent.train(done, step)
+        curr_state = new_state
+        step += 1
+    ep_rewards.append(episode_reward)
+    if episode % config.aggregate_stats_every == 0 or episode == 1:
+        avg_reward = sum(ep_rewards[-config.aggregate_stats_every:]) / config.aggregate_stats_every
+        min_reward = min(ep_rewards[-config.aggregate_stats_every:])
+        max_reward = max(ep_rewards[-config.aggregate_stats_every:])
+        agent.tensorboard.update_stats(
+            reward_avg=avg_reward,
+            reward_min=min_reward,
+            reward_max=max_reward,
+            epsilon=agent.epsilon
+        )
+        if min_reward >= config.min_reward:
+            agent.model.save(
+                f"models/{config.model_name}__"
+                f"{max_reward:_>7.2f}max_"
+                f"{avg_reward:_>7.2f}avg_"
+                f"{min_reward:_>7.2f}min__"
+                f"{int(time.time())}.model"
+            )
