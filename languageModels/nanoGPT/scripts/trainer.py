@@ -1,0 +1,1 @@
+# Simple training script for any neural network 
