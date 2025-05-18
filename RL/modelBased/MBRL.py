@@ -1,6 +1,4 @@
-
-# model_based_rl_full_code.py
-# Industry-Quality Model-Based RL Example
+# Model-Based RL Example
 # 1. Dynamics Model
 # 2. Gradient (1a) & CEM (1b) Planners
 # 3. MPC Loop (Approach 2)
