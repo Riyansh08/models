@@ -58,7 +58,5 @@
 
 ###  ✔️ Papers Done
 - **LoRA** – [LoRA: Low-Rank Adaptation for Fast Fine-Tuning (2023)](https://arxiv.org/abs/2304.00062)
-
 - **DPO** - Direct Preference Optimization for Post-training 
-
 - **Hinton Distillation** - Learning from Parent Model 
