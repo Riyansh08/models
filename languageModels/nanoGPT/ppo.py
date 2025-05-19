@@ -2,6 +2,7 @@
 # This file contains the code for the PPO algorithm 
 # It is based on the paper : https://arxiv.org/abs/2104.05625
 # and the implementation : https://github.com/schinger/FullLLM/blob/main/ppo.py
+# It contains both - PPO AND THE REWARD MODEL 
 
 import wandb
 from dataclasses import dataclass, field
