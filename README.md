@@ -43,6 +43,7 @@
 ### ✔️ Papers Done
 - **PPO** – [Proximal Policy Optimization (2017)](https://arxiv.org/abs/1707.06347)
 - **DQN** – [Deep Q Learning (2013)](https://arxiv.org/abs/1310.5670)
+- **DPO** - Direct Preference Optimization for LLM-Post Training 
 
 --- 
 

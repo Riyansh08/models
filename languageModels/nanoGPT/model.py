@@ -7,7 +7,8 @@ import numpy as np
 from torch.nn import functional as F 
 from dataclasses import dataclass 
 import wandb # Weight and Bias 
-
+from torch.nn import Embedding
+from typing import Optional 
 @dataclass
 class NanoGPTConfig:
     batch_size : int = 8
@@ -150,8 +151,107 @@ class NanoGPT(nn.Module):
         self.config = config
         assert config.vocab_size is not None , "vocab_size is required"
         assert config.block_size is not None , "Context Length is required"
+        self.transformer = nn.ModuleDict(dict(
+            embedding = nn.Embedding(config.vocab_size , config.n_embd), 
+            pos_embeding = nn.Parameter(torch.zeros(1 ,config.block_size , config.n_embd)), 
+            drop = nn.Dropout(config.dropout), 
+            blocks = nn.ModuleList([Block(config) for _ in range (config.n_layer)]), 
+            final_layer_norm = LayerNorm(config)
+        ))
+        self.output_logits = nn.Linear(config.n_embd , config.vocab_size)
+        #initialize output projection weights
+        self.apply(self._init_weights)
+        for pn , p in self.named_parameters(): # Pytorch NN function
+            if pn.endswith('c_proj_weight'):
+                torch.nn.init.normal(p , mean = 0.0 , std = 0.02/math.sqrt(2 * config.n_layer))
+        print("Model initalized")
+        print("Number of parameters : %.2fM " % (self.get_num_params() / 1e6))
+    
+    def get_num_params(self , non_embeddings = True):
+        n_params = sum(p.numel() for p in self.parameters())
+        if non_embeddings:
+            n_params-= self.transformer.embedding.weight.numel()
+        return n_params 
+    # Initialize all weights 
+    def _init_weights(self , module):
+        if isinstance(module , nn.Linear):
+            torch.nn.init.normal_(module.weight , mean = 0.0 , std = 0.02)
+            if module.bias is not None:
+                torch.nn.init.zeros_(module.bias)
+        elif isinstance(module , nn.Embedding):
+            torch.nn.init.normal_(module.weight , mean = 0.0 , std = 0.02)
+    
+    # Forward method 
+    def forward(self , idx , targets = None): 
+        device = idx.device
+        B, T = idx.size()
+        assert T <= self.config.block_size , "T should be less than context length " 
+        pos = torch.arrange(0 , T , dtype = torch.long , device = device) 
+        # Start the forward pass 
+        token_embeddings = self.transformer.embedding(idx)
+        pos_embeddings = self.transformer.pos_embedding(pos)
+        x = token_embeddings + pos_embeddings 
+        x = self.transformer.drop(x)
+        for block in self.transformer.blocks:
+            x = block(x)
+        x = self.transformer.final_layer_norm(x)
+        if targets is not None: 
+            logits = self.output_logits(x)
+            loss = F.cross_entropy(logits.view(-1 , logits.size(-1)) , targets.view(-1) , ignore_index = -1)
+        else: 
+            logits = self.output_logits(x[: , [-1] ,  : ]) #Note : [-1] is used to get the last token 
+            loss = None
+        return logits , loss 
+    
+    def crop_block_size(self , block_size):
+        assert block_size <= self.config.block_size , "Cropping block size should be less than the context length"
+        self.block_size = block_size 
+        self.config.block_size = block_size
+        self.transformer.wpe.weight = nn.Parameter(self.transformer.wpe.weight[:block_size]) 
+        for block in self.transformer.blocks:
+            if hasattr(block.attention , 'casual_mask'):
+                block.attention.casual_mask = block.attention.casual_mask[: , : , :block_size , :block_size]
+    
+    @classmethod 
+    # Method belongs the the class not the instance object 
+    def from_pretrained(cls ,model_type ,  config: Optional[NanoGPTConfig] = None , override_args = None):
+        assert model_type in {'gpt2' , 'gpt2-medium' , 'gpt2-large' , 'gpt2-xl'}
+        override_args = override_args or {}
+        assert all( k == "dropout" for k in override_args) , "only dropout can be overridden"
+        from transformers import GPT2LMHeadModel , GPT2Config
+        print(f"Loading weights from transformers library")
+        config_args = {
+            'gpt2':         dict(n_layer=12, n_head=12, n_embd=768),
+             'gpt2-medium':  dict(n_layer=24, n_head=16, n_embd=1024),
+             'gpt2-large':   dict(n_layer=36, n_head=20, n_embd=1280),
+            'gpt2-xl':      dict(n_layer=48, n_head=25, n_embd=1600),
+        }[model_type]
+        print("forcing vocab size : 50257 , block size : 1024 , bias : False")
+        config_args['vocab_size'] = 50257
+        config_args['block_size'] = 1024
+        config_args['attention_bias'] = False 
+        if 'dropout ' in override_args:
+            config_args['dropout'] = override_args['dropout']
+        config = NanoGPTConfig(**config_args)
+        model = NanoGPT(config)
+        sd = model.state_dict()
+        sd_keys = sd.keys()
+        sd_keys = [k for k in sd_keys if not k.endswith('.attn.bias')]
+        model_HF = GPT2LMHeadModel.from_pretrained(model_type)
+        sd_HF  = model_HF.state_dict()
+        sd_keys_HF = sd_HF.keys()
+        sd_keys_HF = [k for k in sd_keys_HF if not k.endswith('.attn,bias' &'.attn.masked_bias')]
+        transposed = ['attn.c_attn.weight' , 'attn.c_proj.weight' , 'mlp.c_fc.weight' , 'mlp.c_proj.weight']
+        assert len(sd_keys_HF) == len(sd_keys) , f"Mismatch in number of keys : {len(sd_keys_HF)} != {len(sd_keys)}"
+        
+        
+        
+    
+    def estimate_flops(self):
         pass
-        
-        
-        
-                
+    def configure_optimizers(self):
+        pass 
+    
+    @torch.no_grad()
+    def generate(self):
+        pass
