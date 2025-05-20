@@ -1,7 +1,7 @@
 import torch 
 import torch.nn as nn
 from torch.utils.data import DataLoader , TensorDataset 
-import wandb 
+
 import numpy as np 
 import os 
 import torch.nn.functional as F
@@ -97,5 +97,81 @@ teacher_optimizer = torch.optim.RMSprop(teacher_model.parameters() , lr = 0.001)
 student_optimizer = torch.optim.Adam(student_model.parameters() , lr = 0.01)
 # Loss Function 
 def distillation_loss(student_output , teacher_output , temperature ): 
-    #Cross Entropy Loss 
-    pass
+    # Get the logits 
+    # KL Divergence
+    soft_student = torch.softmax(student_output / temperature , dim = -1) 
+    soft_teacher = torch.softmax(teacher_output / temperature , dim  = -1)
+    # KL Divergence 
+    kl = torch.sum(soft_teacher * (torch.log(soft_teacher + 1e-7) - torch.log(soft_student + 1e-7))) # Adding epsilon to avoid log(0)
+    return torch.mean(kl) * temperature ** 2 # Normalize by temperature squared 
+def cross_entropy(student_output , target):
+    return F.cross_entropy(student_output , target)
+#Total Loss 
+def total_loss(student_output , teacher_output , target , temperature = 2.0  , alpha = 0.4): # Higher alpha means more emphaiss on distillation  # Higher temperature means more softened predictions , kind of like a regularization 
+    loss_soft = distillation_loss(student_output , teacher_output , temperature )
+    loss_hard = cross_entropy(student_output , target )
+    return alpha * loss_hard + (1 - alpha) * loss_soft
+
+#Training LOOPs 
+def train_teacher():
+    for i , (images, labels) in enumerate(train_loader):
+        target = torch.nn.functional.one_hot(labels , num_classes = 10)
+        # Setting optimizer to zero 
+        teacher_optimizer.zero_grad()
+        #Forward pass 
+        teacher_output = teacher_model(images)
+        loss_teacher = F.cross_entropy(teacher_output , target)
+        #Backward pass
+        loss_teacher.backward()
+        teacher_optimizer.step()
+        if i % 10 == 0:
+            _ ,preds = torch.max(teacher_output , 1)
+            correct = (preds == labels).sum().item()
+            accuracy = correct / images.size(0)
+            print(f"Epoch {i} , Step {i} , Loss {loss_teacher.item()} , Accuracy {accuracy}")
+def train_student():
+    for i , (images , labels) in enumerate(train_loader):
+        target = torch.nn.functional.one_hot(labels , num_classes = 10)
+        student_optimizer.zero_grad()
+        student_output , _ = student_model(images)
+        with torch.no_grad():
+            teacher_output = teacher_model(images)
+    
+        loss_student = total_loss(student_output , teacher_output, target)
+        loss_student.backward()
+        student_optimizer.step()
+        if i % 10 == 0:
+            _ , preds = torch.max(student_output , 1)
+            correct = (preds == labels).sum().item()
+            accuracy = correct / images.size(0)
+            print(f"Epoch {i} , Step {i} , Loss {loss_student.item()} , Accuracy {accuracy}")
+            
+# Test LOOPs
+# @torch.no_grad()
+def test_model(model , test_loader , is_teacher = False):
+    model.eval()
+    correct = 0 
+    total = 0
+    with torch.no_grad():
+        for images , labels in test_loader:
+            if is_teacher:
+                output = model(images)
+            else:
+                output  , _ = model(images)
+            _ , preds = torch.max(output , 1)
+            total+=labels.size(0)
+            correct+=(preds == labels).sum().item()
+    accuracy = 100 * correct / total
+    print(f"Accuracy of the model is {accuracy}%")
+    return accuracy
+   
+print("Teacher Training Started...")
+train_teacher()
+print("Teacher Training Ended...")
+print("Student Training Started...")
+train_student()
+print("Student Training Ended...")
+
+teacher_accuracy = test_model(teacher_model, test_loader, is_teacher=True)
+student_accuracy = test_model(student_model, test_loader, is_teacher=False)
+     

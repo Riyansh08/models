@@ -17,3 +17,8 @@ from beartype import beartype
 from einops.layers.torch import Rearrange, Reduce
 from functools import partial
 from classifier_free_guidance_pytorch import TextConditioner, AttentionTextConditioner , classifier_free_guidance
+
+def exists(val):
+    return val is not None 
+
+#TO-DO 
